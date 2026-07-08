@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方壺山道場 — 管理儀表板</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans TC',-apple-system,sans-serif;background:linear-gradient(160deg,#f7f0e3,#ede3d0,#e6d8c1);min-height:100vh;color:#3d3225}
+.serif{font-family:'Noto Serif TC',serif}
+.header{position:sticky;top:0;z-index:100;padding:14px 20px;background:rgba(91,58,31,.95);backdrop-filter:blur(12px);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.header h1{margin:0;font-size:18px;color:#fff;flex:1}
+.header .btn{padding:7px 14px;border-radius:8px;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+.stat{padding:18px 16px;border-radius:14px;background:rgba(255,255,255,.8);border:1px solid rgba(0,0,0,.06);text-align:center}
+.stat .val{font-size:28px;font-weight:700;line-height:1}
+.stat .lbl{font-size:12px;color:#9a8a6e;margin-top:4px}
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid rgba(0,0,0,.08)}
+.tab{padding:10px 18px;border:none;cursor:pointer;background:transparent;font-size:14px;color:#9a8a6e;border-bottom:3px solid transparent;border-radius:8px 8px 0 0;transition:all .15s}
+.tab.active{background:rgba(139,90,43,.1);border-bottom-color:#8B5A2B;color:#5B3A1F;font-weight:700}
+.user-card{display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(255,255,255,.7);border:1.5px solid rgba(0,0,0,.06);border-radius:14px;cursor:pointer;text-align:left;width:100%;margin-bottom:8px;transition:all .15s}
+.user-card.active{background:rgba(139,90,43,.08);border-color:rgba(139,90,43,.25);box-shadow:0 2px 12px rgba(139,90,43,.08)}
+.user-card .name{font-size:15px;font-weight:600;color:#5B3A1F}
+.user-card .meta{font-size:12px;color:#9a8a6e;margin-top:2px}
+.user-card .pct{font-size:16px;font-weight:700}
+.ring{transform:rotate(-90deg)}
+.detail{padding:20px 22px;border-radius:14px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 16px rgba(91,58,31,.04);position:sticky;top:80px}
+.issue-item{padding:10px 14px;border-radius:10px;margin-bottom:6px}
+.issue-item.weird{background:rgba(196,144,0,.06);border:1px solid rgba(196,144,0,.15)}
+.issue-item.confused{background:rgba(160,85,32,.06);border:1px solid rgba(160,85,32,.15)}
+.hotspot{padding:14px 18px;border-radius:12px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);margin-bottom:8px}
+.hotspot.severe{border-color:rgba(196,80,40,.15)}
+.rank-badge{font-size:11px;font-weight:700;color:#fff;min-width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.empty{padding:40px;text-align:center;color:#9a8a6e;background:rgba(255,255,255,.6);border-radius:14px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyDYB58OigT9-A5Dc8HF2IO-d4HsyRgTaH0",
+  authDomain:"fanghumts-testing.firebaseapp.com",
+  databaseURL:"https://fanghumts-testing-default-rtdb.firebaseio.com",
+  projectId:"fanghumts-testing",
+  storageBucket:"fanghumts-testing.firebasestorage.app",
+  messagingSenderId:"939309476083",
+  appId:"1:939309476083:web:80f3b0c1c84fdc8f492f86"
+});
+const db = firebase.database();
+</script>
+
+<script>
+// 題目（跟 index.html 同步）
+const PARTS=[{id:"part1",title:"Part 1",subtitle:"第一次打開網站",icon:"🏔️",sections:[{title:"第一次打開網站",items:[{id:"1.1",text:"Logo 動畫出現"},{id:"1.2",text:"動畫期間不能操作"},{id:"1.3",text:"看到首頁場景"},{id:"1.4",text:"畫面順眼文字清楚"},{id:"1.5",text:"視差效果"},{id:"1.6",text:"分辨可點/不可點建築"},{id:"1.7",text:"未登入點建築跳登入"},{id:"1.8",text:"右上角圖示"}]}]},{id:"part2",title:"Part 2",subtitle:"註冊 & 繳費",icon:"📝",sections:[{title:"2.1 Google 登入",items:[{id:"2.1.1",text:"跳出 Google 登入"},{id:"2.1.2",text:"授權後回到網站"},{id:"2.1.3",text:"看到歡迎信+表單"},{id:"2.1.4",text:"取消授權回首頁"}]},{title:"2.2 註冊表單",items:[{id:"2.2.1",text:"姓名自動帶入"},{id:"2.2.2",text:"Email 唯讀"},{id:"2.2.3",text:"必填/選填清楚"},{id:"2.2.4",text:"時辰有吉時"},{id:"2.2.5",text:"必填留空有紅字"},{id:"2.2.6",text:"歡迎信可捲動"},{id:"2.2.7",text:"隱私政策新分頁"}]},{title:"2.3 扶引碼驗證",items:[{id:"2.3.1",text:"有效碼綠勾"},{id:"2.3.2",text:"無效碼紅字"},{id:"2.3.3",text:"格式錯誤被擋"},{id:"2.3.4",text:"不過時按鈕灰色"},{id:"2.3.5",text:"通過後按鈕可按"}]},{title:"2.4 繳費",items:[{id:"2.4.1",text:"另開繳費頁"},{id:"2.4.2",text:"繳費成功進首頁"},{id:"2.4.3",text:"身份正確"}]},{title:"2.5 中斷繳費",items:[{id:"2.5.1",text:"小鳥紅點"},{id:"2.5.2",text:"通知內容"},{id:"2.5.3",text:"保留已填資料"},{id:"2.5.4",text:"可接續繳費"},{id:"2.5.5",text:"關瀏覽器重進"}]}]},{id:"part3",title:"Part 3",subtitle:"登入後首頁",icon:"🏯",sections:[{title:"3.1 建築熱點",items:[{id:"3.1.1",text:"頭像取代登入圖示"},{id:"3.1.2",text:"Hover 放大"},{id:"3.1.3",text:"清信院推進動畫"},{id:"3.1.4",text:"凝暉殿推進動畫"},{id:"3.1.5",text:"不重複觸發"},{id:"3.1.6",text:"建築中不能點"}]},{title:"3.2 時段切換",items:[{id:"3.2.1",text:"白天場景"},{id:"3.2.2",text:"黃昏場景"},{id:"3.2.3",text:"晚上場景"},{id:"3.2.4",text:"淡入淡出切換"}]}]},{id:"part4",title:"Part 4",subtitle:"個人設定與功能",icon:"⚙️",sections:[{title:"4.1 Logo",items:[{id:"4.1.1",text:"Logo 固定左上"},{id:"4.1.2",text:"點 Logo 回首頁"}]},{title:"4.2 個人選單",items:[{id:"4.2.1",text:"電腦 Hover 展開"},{id:"4.2.2",text:"手機點擊展開"},{id:"4.2.3",text:"顯示個人資訊"},{id:"4.2.4",text:"可改資料"},{id:"4.2.5",text:"改完同步"},{id:"4.2.6",text:"錯誤回報連結"},{id:"4.2.7",text:"隱私政策連結"},{id:"4.2.8",text:"登出按鈕"},{id:"4.2.9",text:"登出後確認"}]},{title:"4.3 清信弟子專屬",items:[{id:"4.3.1",text:"扶引額度"},{id:"4.3.2",text:"邀請碼"},{id:"4.3.3",text:"複製邀請碼"},{id:"4.3.4",text:"非弟子不顯示"}]},{title:"4.4 音樂",items:[{id:"4.4.1",text:"預設安靜"},{id:"4.4.2",text:"播放"},{id:"4.4.3",text:"靜音"},{id:"4.4.4",text:"記住設定"}]},{title:"4.5 通知中心",items:[{id:"4.5.1",text:"有通知紅點"},{id:"4.5.2",text:"沒通知無紅點"},{id:"4.5.3",text:"通知清單"},{id:"4.5.4",text:"跳到操作"}]},{title:"4.6 Footer",items:[{id:"4.6.1",text:"版權文字"}]},{title:"4.7 圖片保護",items:[{id:"4.7.1",text:"右鍵阻擋"},{id:"4.7.2",text:"拖曳無效"}]}]},{id:"part5",title:"Part 5",subtitle:"不同裝置",icon:"📱",sections:[{title:"5.1 電腦版",items:[{id:"5.1.1",text:"排列正確"},{id:"5.1.2",text:"滑鼠視差"},{id:"5.1.3",text:"Hover+點擊"},{id:"5.1.4",text:"歡迎信左右捲"}]},{title:"5.2 手機版",items:[{id:"5.2.1",text:"排列正確"},{id:"5.2.2",text:"手指視差"},{id:"5.2.3",text:"直接點觸發"},{id:"5.2.4",text:"觸擊區域夠大"},{id:"5.2.5",text:"上下捲"},{id:"5.2.6",text:"不裁切"}]},{title:"5.3 瀏覽器相容",items:[{id:"5.3.1",text:"Chrome"},{id:"5.3.2",text:"Safari"},{id:"5.3.3",text:"Edge"},{id:"5.3.4",text:"Firefox"},{id:"5.3.5",text:"Chrome Android"}]}]},{id:"part6",title:"Part 6",subtitle:"身份情境",icon:"👤",sections:[{title:"身份情境",items:[{id:"6.1",text:"訪客熱點暗"},{id:"6.2",text:"訪客跳登入"},{id:"6.3",text:"未繳費尚未解鎖"},{id:"6.4",text:"過期尚未續費"},{id:"6.5",text:"小道童凝暉殿"},{id:"6.6",text:"問童子圖示"},{id:"6.7",text:"清信全功能"},{id:"6.8",text:"DC全功能"},{id:"6.9",text:"弟子扶引欄位"},{id:"6.10",text:"過期只顯示續費"}]}]},{id:"part7",title:"Part 7",subtitle:"後台",icon:"🔧",sections:[{title:"7.1 後台登入",items:[{id:"7.1.1",text:"後台登入頁"},{id:"7.1.2",text:"正確帳密登入"},{id:"7.1.3",text:"不存在Email被擋"},{id:"7.1.4",text:"密碼錯誤"},{id:"7.1.5",text:"格式不符"},{id:"7.1.6",text:"無Google登入"},{id:"7.1.7",text:"登出回登入頁"}]},{title:"7.2 會員管理",items:[{id:"7.2.1",text:"新會員出現"},{id:"7.2.2",text:"資料完整"},{id:"7.2.3",text:"DC標記"},{id:"7.2.4",text:"同步更新"}]}]},{id:"part8",title:"Part 8",subtitle:"整體感受",icon:"✨",sections:[{title:"8.1 好看嗎",scale:"like",items:[{id:"8.1.1",text:"氛圍"},{id:"8.1.2",text:"配色"},{id:"8.1.3",text:"動畫"},{id:"8.1.4",text:"美術"},{id:"8.1.5",text:"圖示"}]},{title:"8.2 順暢嗎",scale:"speed",items:[{id:"8.2.1",text:"開站速度"},{id:"8.2.2",text:"動畫流暢"},{id:"8.2.3",text:"切換流暢"},{id:"8.2.4",text:"手機順暢"},{id:"8.2.5",text:"表單無延遲"}]},{title:"8.3 好用嗎",scale:"easy",items:[{id:"8.3.1",text:"知道做什麼"},{id:"8.3.2",text:"步驟清楚"},{id:"8.3.3",text:"功能找到"},{id:"8.3.4",text:"名詞懂"},{id:"8.3.5",text:"錯誤訊息懂"}]}]}];
+
+const TOTAL=PARTS.reduce((t,p)=>t+p.sections.reduce((s,sec)=>s+sec.items.length,0),0);
+
+function findText(id){for(const p of PARTS)for(const s of p.sections)for(const i of s.items)if(i.id===id)return i.text;return id;}
+function findPart(id){for(const p of PARTS)for(const s of p.sections)for(const i of s.items)if(i.id===id)return p;return null;}
+function ringSVG(progress,size=40,stroke=3.5){const r=(size-stroke)/2,c=2*Math.PI*r,off=c*(1-progress);return `<svg width="${size}" height="${size}" class="ring"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(0,0,0,.08)" stroke-width="${stroke}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${progress>=1?'#6B8E4E':'#8B5A2B'}" stroke-width="${stroke}" stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round" style="transition:stroke-dashoffset .4s"/></svg>`;}
+
+let users=[];
+let tab='overview';
+let selectedUser=null;
+
+function loadUsers(cb){
+  db.ref('feedback').once('value').then(snap=>{
+    const data=snap.val();
+    users=data?Object.values(data):[];
+    if(cb)cb();
+    renderDashboard();
+  });
+}
+
+function getProgress(u){
+  if(!u||!u.answers)return{done:0,pct:0};
+  const done=Object.values(u.answers).filter(a=>a&&a.status).length;
+  return{done,pct:done/TOTAL};
+}
+
+function exportCSV(){
+  const allItems=PARTS.flatMap(p=>p.sections.flatMap(s=>s.items.map(i=>({...i,part:p.subtitle}))));
+  let csv="\uFEFF#,Part,題目,"+users.map(u=>`"${u.nickname||'匿名'}"`).join(",")+",問題數\n";
+  for(const item of allItems){
+    let wc=0;const row=[item.id,`"${item.part}"`,`"${item.text}"`];
+    for(const u of users){const a=u.answers?.[item.id];if(a?.status==='weird'||a?.status==='confused')wc++;row.push(`"${a?.status||''}${a?.comment?' | '+a.comment:''}"`);}
+    row.push(wc);csv+=row.join(",")+"\n";
+  }
+  csv+="\n\n自由回饋\n";
+  for(const u of users){if(!u.freeform)continue;csv+=`\n"${u.nickname||'匿名'}"\n`;for(const[k,v]of Object.entries(u.freeform)){if(v)csv+=`"${k}","${(v+'').replace(/"/g,'""')}"\n`;}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`feedback-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+
+function renderDashboard(){
+  const app=document.getElementById('app');
+  const avgPct=users.length>0?Math.round(users.reduce((t,u)=>t+getProgress(u).pct,0)/users.length*100):0;
+  const issueSet=new Set();users.forEach(u=>u.answers&&Object.entries(u.answers).forEach(([id,a])=>{if(a?.status==='weird'||a?.status==='confused')issueSet.add(id);}));
+  const commentCount=users.reduce((t,u)=>t+(u.answers?Object.values(u.answers).filter(a=>a?.comment).length:0)+(u.freeform?Object.values(u.freeform).filter(v=>v).length:0),0);
+  const completed=users.filter(u=>getProgress(u).pct>=1).length;
+
+  let content='';
+  if(tab==='overview') content=renderOverview();
+  else if(tab==='hotspots') content=renderHotspots();
+
+  app.innerHTML=`
+    <div class="header">
+      <span style="font-size:22px">🏔️</span>
+      <h1 class="serif">方壺山道場 — 管理儀表板</h1>
+      <button class="btn" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2)" onclick="loadUsers()">🔄 重新整理</button>
+      <button class="btn" style="background:${users.length>0?'#6B8E4E':'rgba(255,255,255,.1)'}" onclick="exportCSV()" ${users.length===0?'disabled':''}>📥 匯出 CSV</button>
+    </div>
+    <div class="wrap">
+      <div class="stats">
+        <div class="stat"><div class="val" style="color:#5B3A1F">${users.length}</div><div class="lbl">測試者</div></div>
+        <div class="stat"><div class="val" style="color:#6B8E4E">${users.length>0?avgPct+'%':'—'}</div><div class="lbl">平均完成率</div><div class="lbl">${completed} 人已完成</div></div>
+        <div class="stat"><div class="val" style="color:#c49000">${issueSet.size}</div><div class="lbl">問題項目</div></div>
+        <div class="stat"><div class="val" style="color:#a05520">${commentCount}</div><div class="lbl">留言數</div></div>
+        <div class="stat"><div class="val" style="color:#8B5A2B">${TOTAL}</div><div class="lbl">題目總數</div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab ${tab==='overview'?'active':''}" onclick="tab='overview';selectedUser=null;renderDashboard()">👥 測試者總覽</button>
+        <button class="tab ${tab==='hotspots'?'active':''}" onclick="tab='hotspots';renderDashboard()">🔥 問題熱點</button>
+      </div>
+      ${content}
+    </div>`;
+}
+
+function renderOverview(){
+  if(users.length===0) return '<div class="empty"><p style="font-size:18px;margin-bottom:8px">📋</p><p>還沒有人填寫。</p><p style="font-size:12px;margin-top:6px">分享測試網站的連結給測試者後，他們的進度會自動出現在這裡。</p></div>';
+
+  const sorted=[...users].sort((a,b)=>getProgress(b).pct-getProgress(a).pct);
+  let listHTML='';
+  sorted.forEach(u=>{
+    const p=getProgress(u);const isActive=selectedUser&&selectedUser.nickname===u.nickname&&selectedUser.device===u.device;
+    const wc=u.answers?Object.values(u.answers).filter(a=>a?.status==='weird').length:0;
+    const cc=u.answers?Object.values(u.answers).filter(a=>a?.status==='confused').length:0;
+    listHTML+=`<div class="user-card ${isActive?'active':''}" onclick="selectedUser=${isActive?'null':JSON.stringify(u).replace(/'/g,"\\'")};renderDashboard()">
+      ${ringSVG(p.pct)}
+      <div style="flex:1"><div class="name">${u.nickname||'匿名'}</div><div class="meta">${[u.device,u.browser,u.role].filter(Boolean).join(' · ')}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div class="pct" style="color:${p.pct>=1?'#6B8E4E':'#a09880'}">${Math.round(p.pct*100)}%</div>
+        <div style="display:flex;gap:6px;font-size:11px">${wc>0?`<span style="color:#c49000">😕${wc}</span>`:''}${cc>0?`<span style="color:#a05520">❓${cc}</span>`:''}</div>
+      </div>
+    </div>`;
+  });
+
+  let detailHTML='';
+  if(selectedUser){
+    const u=selectedUser;
+    let issuesHTML='';
+    if(u.answers){
+      Object.entries(u.answers).filter(([,a])=>a?.status==='weird'||a?.status==='confused').forEach(([id,a])=>{
+        const part=findPart(id);
+        issuesHTML+=`<div class="issue-item ${a.status}">
+          <div style="display:flex;gap:6px;align-items:flex-start"><span style="font-size:11px;font-family:monospace;color:#9a8a6e;min-width:36px">${id}</span><span style="flex:1;font-size:12.5px">${findText(id)}</span>${part?`<span style="font-size:10.5px;color:#b8ad9c">(${part.subtitle})</span>`:''}</div>
+          ${a.comment?`<p style="margin:4px 0 0 42px;font-size:12px;color:#6b5830;font-style:italic">「${a.comment}」</p>`:''}
+        </div>`;
+      });
+    }
+    let freeHTML='';
+    if(u.freeform){
+      [['best','💚 最喜歡'],['improve','💡 最想改'],['bugs','🐛 問題'],['other','💬 其他']].forEach(([k,label])=>{
+        if(u.freeform[k])freeHTML+=`<div style="margin-top:8px"><div style="font-size:12px;color:#9a8a6e;font-weight:600">${label}</div><p style="margin:2px 0 0;font-size:13px;white-space:pre-wrap">${u.freeform[k]}</p></div>`;
+      });
+    }
+    detailHTML=`<div class="detail">
+      <h3 style="margin:0 0 8px;font-size:16px;color:#5B3A1F">${u.nickname||'匿名'}</h3>
+      <p style="font-size:12px;color:#9a8a6e;margin-bottom:12px">${[u.device,u.browser,u.role].filter(Boolean).join(' · ')}${u.updatedAt?' · 最後更新 '+new Date(u.updatedAt).toLocaleString('zh-TW'):''}</p>
+      ${issuesHTML?`<h4 style="margin:0 0 8px;font-size:13px;color:#8B5A2B">🔥 問題項目</h4>${issuesHTML}`:'<p style="font-size:13px;color:#6B8E4E">✅ 目前沒有標記問題的項目</p>'}
+      ${freeHTML?`<h4 style="margin:12px 0 4px;font-size:13px;color:#8B5A2B">💬 自由回饋</h4>${freeHTML}`:''}
+    </div>`;
+  }
+
+  return `<div class="${selectedUser?'grid-2':''}""><div>${listHTML}</div>${detailHTML}</div>`;
+}
+
+function renderHotspots(){
+  const issues={};
+  users.forEach(u=>{if(!u?.answers)return;Object.entries(u.answers).forEach(([id,a])=>{
+    if(a?.status==='weird'||a?.status==='confused'){
+      if(!issues[id])issues[id]={weird:0,confused:0,total:0,comments:[]};
+      issues[id][a.status]++;issues[id].total++;
+      if(a.comment)issues[id].comments.push({user:u.nickname||'匿名',comment:a.comment});
+    }
+  });});
+  const sorted=Object.entries(issues).sort((a,b)=>b[1].total-a[1].total);
+  if(sorted.length===0) return '<div class="empty">目前沒有問題項目。</div>';
+
+  let html='';
+  sorted.forEach(([id,d],idx)=>{
+    const sev=d.total/users.length;const part=findPart(id);
+    let commentsHTML='';
+    d.comments.forEach(c=>{commentsHTML+=`<div style="font-size:12px;color:#6b5830;margin-bottom:3px"><strong style="color:#8B5A2B">${c.user}</strong>：${c.comment}</div>`;});
+    html+=`<div class="hotspot ${sev>.5?'severe':''}">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span class="rank-badge" style="background:${sev>.5?'#c44028':sev>.3?'#c49000':'#a09880'}">${idx+1}</span>
+        <span style="font-size:12px;font-family:monospace;color:#9a8a6e;min-width:38px;padding-top:2px">${id}</span>
+        <div style="flex:1"><span style="font-size:13px">${findText(id)}</span>${part?`<span style="font-size:11px;color:#b8ad9c;margin-left:6px">(${part.subtitle})</span>`:''}</div>
+        <div style="display:flex;gap:8px;white-space:nowrap">
+          ${d.weird>0?`<span style="font-size:13px;color:#c49000;font-weight:600">😕${d.weird}</span>`:''}
+          ${d.confused>0?`<span style="font-size:13px;color:#a05520;font-weight:600">❓${d.confused}</span>`:''}
+          <span style="font-size:11px;color:#fff;padding:2px 8px;border-radius:10px;background:${sev>.5?'#c44028':'#a09880'};font-weight:600">${d.total}/${users.length}</span>
+        </div>
+      </div>
+      ${commentsHTML?`<div style="margin-top:8px;padding-left:72px">${commentsHTML}</div>`:''}
+    </div>`;
+  });
+  return html;
+}
+
+// Init
+loadUsers();
+</script>
+</body>
+</html>
