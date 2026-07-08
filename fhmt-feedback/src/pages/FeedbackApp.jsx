@@ -282,7 +282,18 @@ export default function FeedbackApp() {
   const contentRef=useRef(null);
   const activeSecRef=useRef(0);   // 累計「實際停留在頁面」的秒數
 
-  useEffect(()=>{ document.title="方壺山捉蟲小隊Testing"; const f=parseFloat(localStorage.getItem('fhmt_fontscale')); if(f>0) setFontScale(f); },[]);
+  useEffect(()=>{
+    // 本輪版本標記：換題庫/換網址後，強制舊登入者重新輸通行碼（清掉跨路徑共用的舊 localStorage 登入）。
+    // 改題庫/開新一輪時把這個字串換一個新值即可再次強制全體重新登入。
+    const TEST_ROUND='ninghui-260708';
+    if(localStorage.getItem('fhmt_round')!==TEST_ROUND){
+      localStorage.removeItem('fhmt_authed');
+      localStorage.removeItem('fhmt_user');
+      localStorage.removeItem('fhmt_group');
+      localStorage.setItem('fhmt_round',TEST_ROUND);
+    }
+    document.title="方壺山捉蟲小隊Testing"; const f=parseFloat(localStorage.getItem('fhmt_fontscale')); if(f>0) setFontScale(f);
+  },[]);
   useEffect(()=>{(async()=>{
     const fs=await loadFormStatus();
     setFormClosed(fs ? (fs.open===false || (fs.deadline && Date.now()>=new Date(fs.deadline).getTime())) : false);
